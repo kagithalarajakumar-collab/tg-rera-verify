@@ -1,1 +1,1206 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const TgReraVerifyApp());
+}
+
+class AppColors {
+  static const Color primaryGreen = Color(0xFF126B38);
+  static const Color secondaryGreen = Color(0xFF168A45);
+  static const Color lightGreenBackground = Color(0xFFF3F8F5);
+  static const Color cardSurface = Colors.white;
+  static const Color textDark = Color(0xFF1A2B20);
+  static const Color textMuted = Color(0xFF5A6F62);
+  static const Color borderOutline = Color(0xFFDDE7E1);
+  static const Color amberWarning = Color(0xFFB45309);
+  static const Color warningBg = Color(0xFFFFFBEB);
+  static const Color warningBorder = Color(0xFFFDE68A);
+  static const Color redDanger = Color(0xFFDC2626);
+  static const Color dangerBg = Color(0xFFFEF2F2);
+  static const Color dangerBorder = Color(0xFFFECACA);
+  static const Color aiAccentBlue = Color(0xFF1E3A8A);
+  static const Color aiPillBg = Color(0xFFEBF3FF);
+  static const Color aiPillBorder = Color(0xFFBFDBFE);
+  static const Color purpleAnalytics = Color(0xFF6D28D9);
+  static const Color tealHydraa = Color(0xFF0F766E);
+}
+
+enum ReraStatusType { registered, noticeIssued, notFound }
+enum SearchMode { reraNumber, projectName, promoter }
+
+class ReraProjectModel {
+  final String projectName;
+  final String reraNumber;
+  final String promoter;
+  final String status;
+  final ReraStatusType statusType;
+  final String location;
+  final String district;
+  final String registrationDate;
+  final String? projectType;
+  final String? sanctionDetails;
+  final String? alertNotice;
+  final bool isLiveGrounded;
+  final String? landExtentAcres;
+  final int? totalTowers;
+  final int? totalUnits;
+  final String? hmdaGhmcPermitNo;
+  final String? proposedCompletionDate;
+  final String? escrowBankName;
+  final String? escrowAccountMasked;
+  final String? qprFilingStatus;
+  final List<String>? publicDocuments;
+  final String? hydraaStatus;
+  final String? nearestWaterbody;
+  final String? ftlDistance;
+  final int? totalSft;
+
+  const ReraProjectModel({
+    required this.projectName,
+    required this.reraNumber,
+    required this.promoter,
+    required this.status,
+    required this.statusType,
+    required this.location,
+    required this.district,
+    required this.registrationDate,
+    this.projectType,
+    this.sanctionDetails,
+    this.alertNotice,
+    this.isLiveGrounded = false,
+    this.landExtentAcres,
+    this.totalTowers,
+    this.totalUnits,
+    this.hmdaGhmcPermitNo,
+    this.proposedCompletionDate,
+    this.escrowBankName,
+    this.escrowAccountMasked,
+    this.qprFilingStatus,
+    this.publicDocuments,
+    this.hydraaStatus,
+    this.nearestWaterbody,
+    this.ftlDistance,
+    this.totalSft,
+  });
+}
+
+class ReraVerificationService {
+  static final Map<String, ReraProjectModel> _telanganaRegistry = {
+    'P02400003991': const ReraProjectModel(
+      projectName: 'Ramky One Odyssey',
+      reraNumber: 'P02400003991',
+      promoter: 'Ramky Estates & Farms Limited',
+      status: 'Registered & Active',
+      statusType: ReraStatusType.registered,
+      location: 'Kokapet, Financial District',
+      district: 'Ranga Reddy',
+      registrationDate: '12/04/2022',
+      projectType: 'High-Rise Residential (3 Towers, 36 Floors)',
+      sanctionDetails: 'HMDA Sanctioned Layout with 70% Escrow Account',
+      landExtentAcres: '5.30 Acres',
+      totalTowers: 3,
+      totalUnits: 783,
+      hmdaGhmcPermitNo: 'HMDA/DP/1042/2021',
+      proposedCompletionDate: '31/12/2026',
+      escrowBankName: 'State Bank of India (Commercial Br)',
+      escrowAccountMasked: 'SBIN000XXXX4991',
+      qprFilingStatus: 'Q4 2025 Filed • 74% Physical Progress',
+      hydraaStatus: 'CLEAR OF FTL',
+      nearestWaterbody: 'Kokapet Cheruvu (380m Distance)',
+      ftlDistance: '350+ Meters (Safe & Permissible)',
+      totalSft: 1566000,
+      publicDocuments: [
+        'Sanctioned Site Layout Order',
+        '30-Year Nil-Encumbrance Certificate',
+        'Standard Proforma Agreement of Sale',
+        'State Pollution Control Board NOC'
+      ],
+    ),
+    'P02400009684': const ReraProjectModel(
+      projectName: 'ASBL Broadway',
+      reraNumber: 'P02400009684',
+      promoter: 'Ashoka Builders India Private Limited (ASBL)',
+      status: 'Registered & Active',
+      statusType: ReraStatusType.registered,
+      location: 'Financial District, Gachibowli',
+      district: 'Hyderabad',
+      registrationDate: '05/05/2025',
+      projectType: 'Ultra-Luxury Highrise (50 Floors, 885 Units)',
+      sanctionDetails: 'GHMC / TS-bPASS Multistorey Approved',
+      landExtentAcres: '6.15 Acres',
+      totalTowers: 4,
+      totalUnits: 885,
+      hmdaGhmcPermitNo: 'GHMC/TS-bPASS/MSB/309/2024',
+      proposedCompletionDate: '30/06/2029',
+      escrowBankName: 'HDFC Bank Ltd (Banjara Hills Br)',
+      escrowAccountMasked: 'HDFC000XXXX9684',
+      qprFilingStatus: 'Q3 2025 Filed • Foundation & Piling',
+      hydraaStatus: 'CLEAR OF FTL',
+      nearestWaterbody: 'Khajaguda Talab (950m Distance)',
+      ftlDistance: '900+ Meters (Zero Inundation Risk)',
+      totalSft: 2212500,
+      publicDocuments: [
+        'TS-bPASS Highrise Permission',
+        'Structural Stability Certificate',
+        'Fire & Emergency Services NOC',
+        'Draft Allotment Agreement'
+      ],
+    ),
+    'P02400006230': const ReraProjectModel(
+      projectName: 'Sattva Lake Ridge',
+      reraNumber: 'P02400006230',
+      promoter: 'Salarpuria Sattva Group',
+      status: 'Registered & Active',
+      statusType: ReraStatusType.registered,
+      location: 'Kokapet, Neopolis corridor',
+      district: 'Ranga Reddy',
+      registrationDate: '18/07/2023',
+      projectType: 'Gated Residential Towers',
+      sanctionDetails: 'HMDA Approved Technical Sanction',
+      landExtentAcres: '4.80 Acres',
+      totalTowers: 6,
+      totalUnits: 620,
+      hmdaGhmcPermitNo: 'HMDA/DEV/4491/2022',
+      proposedCompletionDate: '31/03/2027',
+      escrowBankName: 'ICICI Bank Ltd',
+      escrowAccountMasked: 'ICIC000XXXX6230',
+      qprFilingStatus: 'Q4 2025 Filed • 58% Superstructure Finished',
+      hydraaStatus: 'CLEAR OF FTL',
+      nearestWaterbody: 'Malkam Cheruvu (1.2km Distance)',
+      ftlDistance: '1000+ Meters Outside FTL Limit',
+      totalSft: 1240000,
+      publicDocuments: [
+        'HMDA Technical Approval',
+        'Title Investigation Search Report',
+        'Environmental Impact Clearance'
+      ],
+    ),
+    'P01100003723': const ReraProjectModel(
+      projectName: 'Rajapushpa Imperia',
+      reraNumber: 'P01100003723',
+      promoter: 'Rajapushpa Properties Pvt Ltd',
+      status: 'Registered & Active',
+      statusType: ReraStatusType.registered,
+      location: 'Tellapur, Osman Nagar',
+      district: 'Sangareddy',
+      registrationDate: '22/02/2021',
+      projectType: 'Residential Group Housing',
+      sanctionDetails: 'HMDA & TS-bPASS Compliant',
+      landExtentAcres: '14.50 Acres',
+      totalTowers: 8,
+      totalUnits: 1650,
+      hmdaGhmcPermitNo: 'HMDA/TP/2020/0912',
+      proposedCompletionDate: '31/12/2025',
+      escrowBankName: 'Axis Bank Ltd',
+      escrowAccountMasked: 'UTIB000XXXX3723',
+      qprFilingStatus: 'Q4 2025 Filed • 92% Finishing Work',
+      hydraaStatus: 'CLEAR OF FTL',
+      nearestWaterbody: 'Osman Nagar Kunta (420m Distance)',
+      ftlDistance: '400+ Meters (Permissible Boundary)',
+      totalSft: 3465000,
+      publicDocuments: [
+        'Sanctioned Master Layout Plan',
+        'Encumbrance Certificate (30 Yrs)',
+        'RERA Approved Agreement Template'
+      ],
+    ),
+    'P02200003688': const ReraProjectModel(
+      projectName: 'Jayas Platinum',
+      reraNumber: 'P02200003688',
+      promoter: 'Jayathri Infrastructures India Private Limited',
+      status: 'Notice Issued / Under Regulatory Inquiry',
+      statusType: ReraStatusType.noticeIssued,
+      location: 'Kukatpally, Hyderabad',
+      district: 'Medchal-Malkajgiri',
+      registrationDate: '04/01/2022',
+      projectType: 'Residential Commercial Hybrid',
+      alertNotice: 'Show-cause notice issued by TG RERA authority regarding compliance disclosures and milestone progress.',
+      landExtentAcres: '1.20 Acres',
+      totalTowers: 1,
+      totalUnits: 98,
+      hmdaGhmcPermitNo: 'GHMC/KZ/789/2021',
+      proposedCompletionDate: 'Delayed / Milestone Extension Applied',
+      escrowBankName: 'Union Bank of India',
+      escrowAccountMasked: 'UBIN000XXXX3688',
+      qprFilingStatus: 'Pending QPR Submissions • Discrepancy Flagged',
+      hydraaStatus: 'INSPECTION FLAGGED',
+      nearestWaterbody: 'IDL Lake Catchment (110m Distance)',
+      ftlDistance: 'Within 100m Buffer Zone (Scrutiny Active)',
+      totalSft: 196000,
+      publicDocuments: [
+        'TG-RERA Show-Cause Order',
+        'Interim Layout Plan'
+      ],
+    ),
+  };
+
+  static Future<List<ReraProjectModel>> search({
+    required String query,
+    required SearchMode mode,
+    String selectedDistrict = 'All',
+  }) async {
+    final cleanQuery = query.trim().toLowerCase();
+
+    List<ReraProjectModel> matches = _telanganaRegistry.values.where((project) {
+      if (selectedDistrict != 'All' &&
+          !project.district.toLowerCase().contains(selectedDistrict.toLowerCase())) {
+        return false;
+      }
+      if (cleanQuery.isEmpty) return true;
+
+      switch (mode) {
+        case SearchMode.reraNumber:
+          return project.reraNumber.toLowerCase().contains(cleanQuery);
+        case SearchMode.projectName:
+          return project.projectName.toLowerCase().contains(cleanQuery);
+        case SearchMode.promoter:
+          return project.promoter.toLowerCase().contains(cleanQuery);
+      }
+    }).toList();
+
+    return matches;
+  }
+}
+
+class TgReraVerifyApp extends StatelessWidget {
+  const TgReraVerifyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'TG RERA Verify',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        fontFamily: 'Roboto',
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primaryGreen,
+          primary: AppColors.primaryGreen,
+          secondary: AppColors.secondaryGreen,
+          surface: AppColors.cardSurface,
+        ),
+        scaffoldBackgroundColor: AppColors.lightGreenBackground,
+      ),
+      home: const TgReraHomeScreen(),
+    );
+  }
+}
+
+class TgReraHomeScreen extends StatefulWidget {
+  const TgReraHomeScreen({super.key});
+
+  @override
+  State<TgReraHomeScreen> createState() => _TgReraHomeScreenState();
+}
+
+class _TgReraHomeScreenState extends State<TgReraHomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
+  bool _isLoading = false;
+  String? _errorMessage;
+  ReraProjectModel? _verificationResult;
+  List<ReraProjectModel> _searchResults = [];
+
+  SearchMode _selectedSearchMode = SearchMode.reraNumber;
+  String _selectedDistrict = 'All';
+  int _activeDisclosureTab = 0;
+
+  final Set<String> _watchlistReraNumbers = {};
+
+  final List<String> _districts = const [
+    'All',
+    'Hyderabad',
+    'Ranga Reddy',
+    'Sangareddy',
+    'Medchal-Malkajgiri',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.text = 'P02400003991';
+    _searchController.addListener(() => setState(() {}));
+    _handleVerify();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _toggleWatchlist(ReraProjectModel project) {
+    setState(() {
+      if (_watchlistReraNumbers.contains(project.reraNumber)) {
+        _watchlistReraNumbers.remove(project.reraNumber);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Removed ${project.projectName} from Watchlist'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: AppColors.textDark,
+          ),
+        );
+      } else {
+        _watchlistReraNumbers.add(project.reraNumber);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Pinned ${project.projectName} to Watchlist!'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.lightGreenBackground,
+      appBar: AppBar(
+        backgroundColor: AppColors.primaryGreen,
+        elevation: 2,
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.shield_outlined, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'TG RERA Verify',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                Text(
+                  'Public Due Diligence Portal',
+                  style: TextStyle(fontSize: 10, color: Color(0xFFD1E7DD), letterSpacing: 0.3),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
+            tooltip: 'Reset',
+            onPressed: _handleReset,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildSearchPriorityCard(),
+              const SizedBox(height: 14),
+              if (_isLoading) _buildLoadingSection(),
+              if (!_isLoading && _searchResults.isNotEmpty) _buildSearchResultsList(),
+              if (!_isLoading && _verificationResult != null)
+                _buildDetailedResultCard(_verificationResult!),
+              const SizedBox(height: 14),
+              _buildWhyVerifyCards(),
+              const SizedBox(height: 14),
+              _buildStatutoryDisclaimerFooter(),
+              const SizedBox(height: 50),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchPriorityCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.cardSurface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.primaryGreen.withOpacity(0.3), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.shield_rounded, size: 12, color: AppColors.primaryGreen),
+                    SizedBox(width: 4),
+                    Text(
+                      'Telangana Public Due Diligence',
+                      style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen),
+                    ),
+                  ],
+                ),
+              ),
+              const Text(
+                'PRIORITY SEARCH',
+                style: TextStyle(
+                    fontSize: 10, fontWeight: FontWeight.extrabold, color: AppColors.textMuted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Verify Before You Invest',
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            'Search projects by RERA Number, Project Name, or Promoter.',
+            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                _buildSearchModeTab(SearchMode.reraNumber, 'RERA No.'),
+                _buildSearchModeTab(SearchMode.projectName, 'Project Name'),
+                _buildSearchModeTab(SearchMode.promoter, 'Promoter'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _districts.map((district) {
+                final isSelected = _selectedDistrict == district;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6.0),
+                  child: FilterChip(
+                    label: Text(district),
+                    selected: isSelected,
+                    labelStyle: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? Colors.white : AppColors.textDark,
+                    ),
+                    selectedColor: AppColors.primaryGreen,
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(
+                        color: isSelected ? AppColors.primaryGreen : AppColors.borderOutline,
+                      ),
+                    ),
+                    onSelected: (val) {
+                      setState(() => _selectedDistrict = district);
+                      _handleVerify();
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _searchController,
+            focusNode: _focusNode,
+            style: TextStyle(
+              fontFamily:
+                  _selectedSearchMode == SearchMode.reraNumber ? 'monospace' : 'Roboto',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            decoration: InputDecoration(
+              prefixIcon: Icon(
+                _selectedSearchMode == SearchMode.reraNumber
+                    ? Icons.tag_rounded
+                    : (_selectedSearchMode == SearchMode.projectName
+                        ? Icons.business_rounded
+                        : Icons.person_outline),
+                size: 18,
+                color: AppColors.primaryGreen,
+              ),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.cancel, size: 16, color: Colors.grey),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {});
+                      },
+                    )
+                  : null,
+              hintText: _selectedSearchMode == SearchMode.reraNumber
+                  ? 'Enter RERA Number (e.g. P02400003991)'
+                  : (_selectedSearchMode == SearchMode.projectName
+                      ? 'Enter Project Name (e.g. Broadway)'
+                      : 'Enter Promoter (e.g. ASBL, Ramky)'),
+              hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
+              filled: true,
+              fillColor: AppColors.lightGreenBackground,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.borderOutline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.borderOutline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.primaryGreen, width: 1.5),
+              ),
+            ),
+            onSubmitted: (_) => _handleVerify(),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Text('Quick:', style: TextStyle(fontSize: 10.5, color: Colors.grey)),
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: () {
+                  _searchController.text = 'P02400003991';
+                  _selectedSearchMode = SearchMode.reraNumber;
+                  _handleVerify();
+                },
+                child: const Text('P02400003991 (Ramky)',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primaryGreen,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline)),
+              ),
+              const SizedBox(width: 10),
+              GestureDetector(
+                onTap: () {
+                  _searchController.text = 'P02400009684';
+                  _selectedSearchMode = SearchMode.reraNumber;
+                  _handleVerify();
+                },
+                child: const Text('P02400009684 (ASBL)',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline)),
+              ),
+            ],
+          ),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.dangerBg,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.dangerBorder),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, size: 14, color: AppColors.redDanger),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(_errorMessage!,
+                        style: const TextStyle(fontSize: 11, color: AppColors.redDanger)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: _handleVerify,
+            icon: const Icon(Icons.shield_rounded, size: 16),
+            label: Text(
+              _selectedSearchMode == SearchMode.reraNumber
+                  ? 'VERIFY RERA NUMBER'
+                  : 'SEARCH PROJECTS',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchModeTab(SearchMode mode, String label) {
+    final isSelected = _selectedSearchMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedSearchMode = mode;
+            _errorMessage = null;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? AppColors.primaryGreen : Colors.grey.shade700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderOutline),
+      ),
+      child: const Column(
+        children: [
+          CircularProgressIndicator(strokeWidth: 3, color: AppColors.primaryGreen),
+          SizedBox(height: 12),
+          Text(
+            'Querying Telangana RERA Registry...',
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textDark),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchResultsList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'FOUND ${_searchResults.length} PROJECTS IN TELANGANA',
+          style: const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+        ),
+        const SizedBox(height: 8),
+        ..._searchResults.map((project) {
+          final isRegistered = project.statusType == ReraStatusType.registered;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.borderOutline),
+            ),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _verificationResult = project;
+                  _searchResults = [];
+                });
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          project.projectName,
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textDark),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isRegistered
+                              ? AppColors.primaryGreen.withOpacity(0.1)
+                              : AppColors.warningBg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          isRegistered ? 'REGISTERED' : 'NOTICE',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.bold,
+                            color: isRegistered
+                                ? AppColors.primaryGreen
+                                : AppColors.amberWarning,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text('Promoter: ${project.promoter}',
+                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(project.reraNumber,
+                          style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryGreen)),
+                      Text(project.location,
+                          style: const TextStyle(fontSize: 10.5, color: Colors.grey)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildDetailedResultCard(ReraProjectModel project) {
+    final isRegistered = project.statusType == ReraStatusType.registered;
+    final isNotice = project.statusType == ReraStatusType.noticeIssued;
+    final isWatched = _watchlistReraNumbers.contains(project.reraNumber);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardSurface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isRegistered
+              ? AppColors.secondaryGreen.withOpacity(0.4)
+              : (isNotice ? AppColors.warningBorder : AppColors.dangerBorder),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: isRegistered
+                  ? AppColors.primaryGreen.withOpacity(0.08)
+                  : (isNotice ? AppColors.warningBg : AppColors.dangerBg),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isRegistered
+                      ? Icons.verified_user_rounded
+                      : (isNotice ? Icons.warning_amber_rounded : Icons.cancel_outlined),
+                  color: isRegistered
+                      ? AppColors.primaryGreen
+                      : (isNotice ? AppColors.amberWarning : AppColors.redDanger),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isRegistered
+                        ? 'PUBLIC RECORD COMPILED'
+                        : (isNotice ? 'REGULATORY NOTICE ISSUED' : 'NOT FOUND IN TG-RERA'),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: isRegistered
+                          ? AppColors.primaryGreen
+                          : (isNotice ? AppColors.amberWarning : AppColors.redDanger),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isRegistered
+                        ? AppColors.primaryGreen
+                        : (isNotice ? AppColors.amberWarning : AppColors.redDanger),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    isRegistered ? 'REGISTERED' : (isNotice ? 'NOTICE' : 'UNVERIFIED'),
+                    style: const TextStyle(
+                        fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Column(
+              children: [
+                _buildDataRow(Icons.business_rounded, 'Project Name', project.projectName,
+                    isBold: true),
+                _buildDataRow(Icons.tag_rounded, 'RERA Number', project.reraNumber,
+                    isMonospace: true),
+                _buildDataRow(Icons.person_outline, 'Promoter', project.promoter),
+                _buildDataRow(Icons.location_on_outlined, 'Location',
+                    '${project.location} (${project.district})'),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14.0),
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  _buildDisclosureTabItem(0, 'Overview'),
+                  _buildDisclosureTabItem(1, 'Approvals & Escrow'),
+                  _buildDisclosureTabItem(2, 'Milestones'),
+                ],
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: _buildActiveDisclosureTabContent(project),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14.0),
+            child: OutlinedButton.icon(
+              onPressed: () => _toggleWatchlist(project),
+              icon: Icon(
+                isWatched ? Icons.bookmark : Icons.bookmark_border_rounded,
+                size: 15,
+                color: isWatched ? Colors.amber.shade800 : AppColors.textMuted,
+              ),
+              label: Text(
+                isWatched ? 'WATCHING' : 'WATCH PROJECT',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: isWatched ? Colors.amber.shade800 : AppColors.textMuted,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDisclosureTabItem(int index, String title) {
+    final isSelected = _activeDisclosureTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _activeDisclosureTab = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? AppColors.primaryGreen : Colors.grey.shade700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveDisclosureTabContent(ReraProjectModel project) {
+    if (_activeDisclosureTab == 0) {
+      return Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.lightGreenBackground,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            _buildTabRow('Land Extent:', project.landExtentAcres ?? 'Disclosed in Master Deed'),
+            _buildTabRow('Sanctioned Towers:', '${project.totalTowers ?? 0} Highrise Towers'),
+            _buildTabRow('Sanctioned Units:', '${project.totalUnits ?? 0} Units'),
+            _buildTabRow('Classification:', project.projectType ?? 'Residential Group Housing'),
+          ],
+        ),
+      );
+    } else if (_activeDisclosureTab == 1) {
+      return Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.lightGreenBackground,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            _buildTabRow('Municipal Permit:', project.hmdaGhmcPermitNo ?? 'HMDA / TS-bPASS verified'),
+            _buildTabRow('70% Escrow Bank:', project.escrowBankName ?? 'State Bank of India'),
+            _buildTabRow('Escrow Account:', project.escrowAccountMasked ?? 'Section 4 Compliant'),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.lightGreenBackground,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            _buildTabRow('Registration Date:', project.registrationDate),
+            _buildTabRow('Committed Possession:', project.proposedCompletionDate ?? 'Per Filing'),
+            _buildTabRow('Quarterly Progress:', project.qprFilingStatus ?? 'Filed with authority'),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _buildTabRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataRow(IconData icon, String label, String value,
+      {bool isBold = false, bool isMonospace = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: AppColors.primaryGreen),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 90,
+            child: Text(label,
+                style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted)),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontFamily: isMonospace ? 'monospace' : 'Roboto',
+                fontSize: 11.5,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+                color: AppColors.textDark,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWhyVerifyCards() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'WHY VERIFY?',
+          style: TextStyle(
+              fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _buildWhyCard(Icons.badge_outlined, 'Registration', 'Check project registration.'),
+            const SizedBox(width: 8),
+            _buildWhyCard(Icons.apartment_outlined, 'Promoter', 'Review promoter information.'),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _buildWhyCard(Icons.map_outlined, 'Project', 'Check location details.'),
+            const SizedBox(width: 8),
+            _buildWhyCard(Icons.security_outlined, 'Safer', 'Verify before investing.'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWhyCard(IconData icon, String title, String desc) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.borderOutline),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: AppColors.primaryGreen, size: 18),
+            const SizedBox(height: 4),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark)),
+            const SizedBox(height: 2),
+            Text(desc,
+                style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatutoryDisclaimerFooter() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.warningBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.warningBorder, width: 1.5),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.gavel_rounded, color: AppColors.amberWarning, size: 18),
+          SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'MANDATORY NOTICE & DISCLAIMER:',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.extrabold,
+                    color: AppColors.amberWarning,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'This application is for information purposes only. Original, legally binding verification records and project sanction orders can only be found on the official Telangana Government RERA website: rera.telangana.gov.in. TG RERA Verify is an independent research utility.',
+                  style: TextStyle(fontSize: 10.5, color: Color(0xFF78350F), height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleVerify() async {
+    final query = _searchController.text.trim();
+    if (query.isEmpty && _selectedDistrict == 'All') {
+      setState(() => _errorMessage = 'Please enter search text.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _verificationResult = null;
+      _searchResults = [];
+    });
+
+    try {
+      final results = await ReraVerificationService.search(
+        query: query,
+        mode: _selectedSearchMode,
+        selectedDistrict: _selectedDistrict,
+      );
+
+      setState(() {
+        _isLoading = false;
+        if (results.length == 1 && _selectedSearchMode == SearchMode.reraNumber) {
+          _verificationResult = results.first;
+        } else {
+          _searchResults = results;
+        }
+      });
+    } catch (_) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to fetch registry data. Please try again.';
+      });
+    }
+  }
+
+  void _handleReset() {
+    setState(() {
+      _searchController.clear();
+      _errorMessage = null;
+      _verificationResult = null;
+      _searchResults = [];
+      _selectedDistrict = 'All';
+    });
+    _focusNode.requestFocus();
+  }
+}
